@@ -4,7 +4,7 @@
   "description": "Backend for Habituals (by Thrivingg). NodeJS, SQL",
   "main": "server.js",
   "scripts": {
-    "test": "nodemon server"
+    "test": "node server"
   },
   "repository": {
     "type": "git",
@@ -13,7 +13,7 @@
   "keywords": [
     "Habituals",
     "NodeJS",
-    "SQL",
+    "Flutter",
     "Healthcare",
     "Coorporate",
     "Well-Being"
@@ -23,5 +23,13 @@
   "homepage": "https://bitbucket.org/AbhayVAshokan/habituals-backend#readme",
   "devDependencies": {
     "nodemon": "^2.0.4"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "morgan": "^1.10.0",
+    "mysql2": "^2.1.0",
+    "sequelize": "^5.21.11",
+    "sql": "^0.78.0",
+    "uuid": "^8.1.0"
   }
 }
