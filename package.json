@@ -1,0 +1,27 @@
+{
+  "name": "habituals_backend",
+  "version": "1.0.0",
+  "description": "Backend for Habituals (by Thrivingg). NodeJS, SQL",
+  "main": "server.js",
+  "scripts": {
+    "test": "nodemon server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://AbhayVAshokan@bitbucket.org/AbhayVAshokan/habituals-backend.git"
+  },
+  "keywords": [
+    "Habituals",
+    "NodeJS",
+    "SQL",
+    "Healthcare",
+    "Coorporate",
+    "Well-Being"
+  ],
+  "author": "Abhay V Ashokan",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/AbhayVAshokan/habituals-backend#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}
