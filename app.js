@@ -8,6 +8,7 @@ const userSchema = require('./api/models/users')
 const memoSchema = require('./api/models/memos')
 const adminRoutes = require('./api/routes/admin')
 const nudgeSchema = require('./api/models/nudges')
+const querySchema = require('./api/models/queries')
 const credentials = require('./resources/credentials')
 const realtime = require('./resources/realtime_data.js')
 
@@ -40,11 +41,13 @@ const connection = new Sequelize(keys.databaseName, credentials.userName, creden
 const User = connection.define('users', userSchema)
 const Memo = connection.define('memos', memoSchema)
 const Nudge = connection.define('nudges', nudgeSchema)
+const Query = connection.define('queries', querySchema)
 
 // Updating the realtime data to the table variables
 realtime.User = User
-realtime.Nudge = Nudge
 realtime.Memo = Memo
+realtime.Nudge = Nudge
+realtime.Query = Query
 
 // Updating tables
 connection.sync()
@@ -69,14 +72,17 @@ app.use('/admin', adminRoutes)
 
 // Throw 404 error if the request does not match an existing route
 app.use((req, res, next) => {
-    const error = Error();
-    error.status(404);
-    next(error);
-});
+    const error = new Error()
+    error.status = 404
+    error.message = '404 route not found'
+    next(error)
+})
+
+//  Return the error thrown by any part of the project.
 app.use((err, req, res, next) => {
-    res.status(404).json({
+    res.status(err.status || 404).json({
         status: false,
-        error: '404 route not found',
+        error: err.message,
     })
 });
 
