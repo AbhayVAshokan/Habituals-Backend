@@ -5,11 +5,12 @@ const Sequelize = require('sequelize')
 const keys = require('./resources/keys')
 const userRoutes = require('./api/routes/users')
 const userSchema = require('./api/models/users')
-const memoSchema = require('./api/models/memos')
 const adminRoutes = require('./api/routes/admin')
-const nudgeSchema = require('./api/models/nudges')
-const querySchema = require('./api/models/queries')
+const memoSchema = require('./api/models/user/memos')
 const credentials = require('./resources/credentials')
+const nudgeSchema = require('./api/models/user/nudges')
+const querySchema = require('./api/models/user/queries')
+const adminNudges = require('./api/models/admin/nudges')
 const realtime = require('./resources/realtime_data.js')
 
 const app = express()
@@ -40,14 +41,16 @@ const connection = new Sequelize(keys.databaseName, credentials.userName, creden
 // Defining tables
 const User = connection.define('users', userSchema)
 const Memo = connection.define('memos', memoSchema)
-const Nudge = connection.define('nudges', nudgeSchema)
+const Nudge = connection.define('userNudges', nudgeSchema)
 const Query = connection.define('queries', querySchema)
+const AdminNudge = connection.define('adminNudges', adminNudges)
 
 // Updating the realtime data to the table variables
 realtime.User = User
 realtime.Memo = Memo
 realtime.Nudge = Nudge
 realtime.Query = Query
+realtime.AdminNudge = AdminNudge
 
 // Updating tables
 connection.sync()

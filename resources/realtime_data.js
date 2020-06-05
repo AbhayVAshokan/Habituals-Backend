@@ -2,8 +2,9 @@
 
 module.exports = {
     User: null,
-    Node: null,
     Memo: null,
     Query: null,
+    Nudge: null,
+    AdminNudge: null,
     auth: null,
 }

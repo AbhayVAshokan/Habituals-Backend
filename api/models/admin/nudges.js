@@ -1,27 +1,21 @@
+// Model to represent admin's access to addition and deletion of nudges.
+
 const Sequelize = require('sequelize')
 
-const nudgeSchema = {
+const adminNudgeSchema = {
     id: {
         type: Sequelize.STRING,
         primaryKey: true,
     },
     type: {
         type: Sequelize.STRING,
-        notNull: true,
+        required: true,
     },
     title: {
         type: Sequelize.STRING,
-        notNull: true,
-    },
-    status: {
-        type: Sequelize.STRING,
-        notNull: true,
-    },
-    date: {
-        type: Sequelize.DATE,
-        default: Date.now
+        required: true,
     },
     nudgeBooster: Sequelize.TEXT,
 }
 
-module.exports = nudgeSchema
+module.exports = adminNudgeSchema

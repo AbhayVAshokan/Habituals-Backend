@@ -1,3 +1,5 @@
+jwt = require('jsonwebtoken')
+
 module.exports = {
     port: 8010,
     baseUrl: 'localhost',
