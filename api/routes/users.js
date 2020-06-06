@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken')
 const keys = require('../../resources/keys')
 const checkAuth = require('../middleware/check_auth')
 const realtime = require('../../resources/realtime_data')
+const controllers = require('../controllers/user_controllers')
 
 const router = express.Router()
 
@@ -22,56 +23,60 @@ router.post('/register', (req, res, next) => {
         })
 
     else {
-        realtime.User.findAll({
-            where: {
-                emailAddress: req.body.emailAddress
-            }
-        }).then((user) => {
-            if (user.length >= 1) {
-                res.status(409).json({
-                    status: false,
-                    error: 'Email Address already exists'
-                })
-            } else {
-                // Hashing the password
-                bcrypt.hash(req.body.password, 10, (err, hashedPassword) => {
-                    if (err) {
-                        return res.status(500).json({
-                            status: false,
-                            error: err,
-                        })
-                    } else {
-                        realtime.User.create({
-                            id: uuid.v4(),  // generating unique id
-                            age: req.body.age,
-                            gender: req.body.gender,
-                            password: hashedPassword,
-                            position: req.body.position,
-                            mailingList: req.body.mailingList,
-                            emailAddress: req.body.emailAddress,
-                        })
-                            .then((result) => {
-                                res.status(201).json({
-                                    status: true,
-                                    id: result.id,
-                                    profile: {
-                                        type: 'GET',
-                                        url: `${keys.baseUrl}:${keys.port}/user/profile`,
-                                        authorization: 'bearer token',
-                                    },
-                                    message: 'Successfully registered'
-                                })
+        try {
+            realtime.User.findAll({
+                where: {
+                    emailAddress: req.body.emailAddress
+                }
+            }).then((user) => {
+                if (user.length >= 1) {
+                    res.status(409).json({
+                        status: false,
+                        error: 'Email Address already exists'
+                    })
+                } else {
+                    // Hashing the password
+                    bcrypt.hash(req.body.password, 10, (err, hashedPassword) => {
+                        if (err) {
+                            return res.status(500).json({
+                                status: false,
+                                error: err,
                             })
-                            .catch((err) => {
-                                res.status(500).json({
-                                    status: false,
-                                    error: err,
-                                })
+                        } else {
+                            realtime.User.create({
+                                id: uuid.v4(),  // generating unique id
+                                age: req.body.age,
+                                gender: req.body.gender,
+                                password: hashedPassword,
+                                position: req.body.position,
+                                mailingList: req.body.mailingList,
+                                emailAddress: req.body.emailAddress,
+                                startDate: req.body.startDate ? req.body.startDate : Date()
                             })
-                    }
-                })
-            }
-        })
+                                .then((result) => {
+                                    controllers.getNudges(result)
+
+                                    res.status(201).json({
+                                        status: true,
+                                        id: result.id,
+                                        profile: {
+                                            type: 'GET',
+                                            url: `${keys.baseUrl}:${keys.port}/user/profile`,
+                                            authorization: 'bearer token',
+                                        },
+                                        message: 'Successfully registered'
+                                    })
+                                })
+                        }
+                    })
+                }
+            })
+        } catch (err) {
+            res.status(500).json({
+                status: false,
+                error: err.message,
+            })
+        }
     }
 })
 
@@ -96,7 +101,18 @@ router.post('/login', (req, res, next) => {
             if (user.length < 1) {
                 res.status(404).json({
                     status: false,
-                    error: 'Email Address already exists',
+                    error: 'Email Address does not exist',
+                    register: {
+                        type: 'POST',
+                        url: `${keys.baseUrl}:${keys.port}/user/register`,
+                        body: {
+                            emailAddress: 'string',
+                            password: 'string',
+                            gender: 'string',
+                            age: 'number',
+                            position: 'string'
+                        }
+                    }
                 })
             } else {
                 bcrypt.compare(req.body.password, user[0].password, (err, result) => {
@@ -183,7 +199,6 @@ router.post('/questions', checkAuth, (req, res, next) => {
 // API to fetch the user profile
 router.get('/profile', checkAuth, (req, res, next) => {
     const userId = realtime.auth.userId
-    const profile = {}
 
     try {
         realtime.User.findOne({
@@ -222,39 +237,35 @@ router.get('/profile', checkAuth, (req, res, next) => {
 
 // API to create a new nudge
 router.post('/nudge', checkAuth, (req, res, next) => {
-    const type = req.body.type
+    const type = "custom"
     const title = req.body.title
     const userId = realtime.auth.userId
     const nudgeBooster = req.body.nudgeBooster
     const date = req.body.date ? req.body.date : Date()
-    const standardType = ['body', 'mind', 'relationship', 'achievement', 'personalDevelopment']
-        .find(element => element == type) != undefined
 
     if (!title) {
         res.status(404).json({
             status: false,
             error: 'title parameter is required',
         })
-    } else if (!type) {
-        res.status(404).json({
-            status: false,
-            error: 'type parameter is required',
-        })
-    } else if (!standardType) {
-        res.status(500).json({
-            status: false,
-            error: 'Invalid title',
-        })
     } else {
-        console.log('valid title')
         realtime.Nudge.create({
-            id: userId,
-            type: type,
+            id: uuid.v4(),
+            userId: userId,
+            nudgeId: uuid.v4(),
             status: 'not completed',
             date: date,
             nudgeBooster: nudgeBooster,
         })
             .then((result) => {
+                realtime.CustomNudge.create({
+                    id: result.dataValues.nudgeId,
+                    type: type,
+                    title: title,
+                    nudgeBooster: nudgeBooster,
+                })
+                    .then((u) => { })
+
                 res.status(201).json({
                     status: true,
                 })
@@ -270,80 +281,217 @@ router.post('/nudge', checkAuth, (req, res, next) => {
 
 // API to fetch all the nudges
 router.get('/nudge', checkAuth, (req, res, next) => {
+    // userId as decoded from the auth token
     const userId = realtime.auth.userId
+    // list of all nudges of the current user
+    var nudges = {
+        status: true,
+        count: null,
+        nudges: [],
+    }
+    // list of all nudges retrieved from the userNudges table
+    var userNudges = []
 
-    realtime.Nudge.findAll({ id: userId })
-        .then((nudges) => {
-            if (nudges.length == 0) {
-                res.status(404).json({
-                    status: false,
-                    error: `No nudges available`
-                })
-            } else {
-                res.status(200).json({
-                    status: true,
-                    nudges: nudges.map((nudge) => {
-                        return {
-                            id: nudge.id,
-                            type: nudge.type,
-                            title: nudge.title,
-                            status: nudge.status,
-                            date: nudge.date
-                        }
-                    }),
-                })
-            }
+    // list of all nudges retrieved from adminNudges table
+    var adminNudges = []
 
-        })
-        .catch((err) => {
-            res.status(500).json({
-                status: false,
-                error: err.message,
+    // list of all nudges retrieved from customNudges table
+    var customNudges = []
+
+    try {
+        // Retrieving all standard nudges
+        realtime.AdminNudge.findAll()
+            .then((_nudges) => {
+                _nudges.forEach((_nudge) => {
+                    adminNudges.push(_nudge.dataValues)
+                })
             })
+
+        // retrieving all the custom nudges
+        realtime.CustomNudge.findAll()
+            .then((_nudges) => {
+                _nudges.forEach((_nudge) => {
+                    customNudges.push(_nudge.dataValues)
+                })
+            })
+
+        // retrieving all user nudges
+        realtime.Nudge.findAll({
+            where: {
+                userId: userId,
+            }
         })
+            .then((_userNudges) => {
+                _userNudges.forEach((_nudge) => {
+                    userNudges.push(_nudge.dataValues)
+                })
+            })
+            .then((_) => {
+                var nudgeType = null
+                var nudgeTitle = null
+                var nudgeBooster = null
+
+                userNudges.forEach((_nudge) => {
+                    var matchFound = false
+
+                    customNudges.forEach((_customNudge) => {
+                        if (_customNudge.id == _nudge.nudgeId) {
+                            matchFound = true
+                            nudgeType = 'custom'
+                            nudgeTitle = _customNudge.title
+                            nudgeBooster = _customNudge.nudgeBooster
+                        }
+                    })
+                    adminNudges.forEach((_adminNudge) => {
+                        if (_adminNudge.id == _nudge.nudgeId) {
+                            matchFound = true
+                            nudgeType = _adminNudge.type
+                            nudgeTitle = _adminNudge.title
+                            nudgeBooster = _adminNudge.nudgeBooster
+                        }
+                    })
+
+                    if (matchFound)
+                        nudges.nudges.push({
+                            id: _nudge.nudgeId,
+                            type: nudgeType,
+                            title: nudgeTitle,
+                            nudgeBooster: nudgeBooster,
+                            date: _nudge.date,
+                            status: _nudge.status,
+                        })
+                })
+                nudges.count = nudges.nudges.length
+                if (nudges.count == 0) {
+                    res.status(404).json({
+                        status: false,
+                        error: 'No nudges found'
+                    })
+                } else {
+                    res.status(201).json(nudges)
+                }
+            })
+
+    } catch (err) {
+        res.status(500).json({
+            status: false,
+            error: err.message,
+        })
+    }
 })
 
 // API to fetch the nudges of a specific type
 router.get('/nudge/:type', checkAuth, (req, res, next) => {
-    const type = req.params.type
+    // userId as decoded from the auth token
     const userId = realtime.auth.userId
-    const standardType = ['body', 'mind', 'relationship', 'achievement', 'personalDevelopment']
-        .find(element => element == type) != undefined
+    // [body, mind, relationship, achievement, personalDevelopment, custom]
+    const type = req.params.type
+    // list of all nudges of the current user
+    var nudges = {
+        status: true,
+        count: null,
+        nudges: [],
+    }
+    // list of all nudges retrieved from the userNudges table
+    var userNudges = []
 
-    realtime.Nudge.findAll({ where: { id: userId } })
-        .then((nudges) => {
-            if (standardType) {
-                const typeNudges = nudges.find({ type: type })
+    // list of all nudges retrieved from adminNudges table
+    var adminNudges = []
 
-                if (typeNudges.length == 0) {
-                    res.status(404).json({
-                        status: false,
-                        error: `No nudges of type ${type} available`
-                    })
-                } else {
+    // list of all nudges retrieved from customNudges table
+    var customNudges = []
 
-                    res.status(200).json({
-                        status: true,
-                        type: type,
-                        nudges: typeNudges.map((nudge) => {
-                            return {
-                                id: nudge.id,
-                                type: nudge.type,
-                                title: nudge.title,
-                                status: nudge.status,
-                                date: nudge.date
-                            }
-                        }),
-                    })
-                }
+    try {
+        // Retrieving all standard nudges
+        realtime.AdminNudge.findAll({
+            where: {
+                type: type,
             }
         })
-        .catch((err) => {
-            res.status(404).json({
-                status: false,
-                error: err.message,
+            .then((_nudges) => {
+                _nudges.forEach((_nudge) => {
+                    adminNudges.push(_nudge.dataValues)
+                })
             })
+
+        // retrieving all the custom nudges
+        realtime.CustomNudge.findAll({
+            where: {
+                type: type
+            }
         })
+            .then((_nudges) => {
+                _nudges.forEach((_nudge) => {
+                    customNudges.push(_nudge.dataValues)
+                })
+            })
+
+        // retrieving all user nudges
+        realtime.Nudge.findAll({
+            where: {
+                userId: userId,
+            }
+        })
+            .then((_userNudges) => {
+                _userNudges.forEach((_nudge) => {
+                    userNudges.push(_nudge.dataValues)
+                })
+            })
+            .then((_) => {
+                var nudgeType = null
+                var nudgeTitle = null
+                var nudgeBooster = null
+
+                userNudges.forEach((_nudge) => {
+                    var matchFound = false
+
+                    if (type == 'custom') {
+                        customNudges.forEach((_customNudge) => {
+                            if (_customNudge.id == _nudge.nudgeId) {
+                                matchFound = true
+                                nudgeType = 'custom'
+                                nudgeTitle = _customNudge.title
+                                nudgeBooster = _customNudge.nudgeBooster
+                            }
+                        })
+                    } else {
+                        adminNudges.forEach((_adminNudge) => {
+                            if (_adminNudge.id == _nudge.nudgeId) {
+                                matchFound = true
+                                nudgeType = _adminNudge.type
+                                nudgeTitle = _adminNudge.title
+                                nudgeBooster = _adminNudge.nudgeBooster
+                            }
+                        })
+                    }
+
+                    if (matchFound)
+                        nudges.nudges.push({
+                            id: _nudge.nudgeId,
+                            type: nudgeType,
+                            title: nudgeTitle,
+                            nudgeBooster: nudgeBooster,
+                            date: _nudge.date,
+                            status: _nudge.status,
+                        })
+                })
+                nudges.count = nudges.nudges.length
+                if (nudges.count == 0) {
+                    res.status(404).json({
+                        status: false,
+                        error: 'No nudges found'
+                    })
+                } else {
+                    res.status(201).json(nudges)
+                }
+            })
+
+    } catch (err) {
+        res.status(500).json({
+            status: false,
+            error: err.message,
+        })
+    }
 })
 
 module.exports = router

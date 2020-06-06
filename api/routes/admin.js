@@ -1,8 +1,8 @@
 const uuid = require('uuid')
 const express = require('express')
-const adminAuth = require('../middleware/admin_auth')
 const keys = require('../../resources/keys')
 const realtime = require('../../resources/realtime_data')
+const controllers = require('../controllers/admin_controllers')
 
 const router = express.Router()
 
@@ -26,7 +26,7 @@ router.get('/user', (req, res, next) => {
                         age: user.age,
                         gender: user.gender,
                         position: user.position,
-                        url: {
+                        profile: {
                             type: 'GET',
                             profile: `${keys.baseUrl}:${keys.port}/admin/user/${user.id}`
                         }
@@ -107,6 +107,7 @@ router.get('/nudge', (req, res, next) => {
         .then((nudges) => {
             res.status(200).json({
                 status: true,
+                count: nudges.length,
                 nudges: nudges.map((nudge) => {
                     return {
                         id: nudge.id,
@@ -157,24 +158,27 @@ router.get('/nudge/:id', (req, res, next) => {
 
 // Add a new nudge
 router.post('/nudge', (req, res, next) => {
-    realtime.AdminNudge.create({
-        id: uuid.v4(),
-        type: req.body.type ? req.body.type : null,
-        title: req.body.title ? req.body.title : null,
-        nudgeBooster: req.body.nudgeBooster ? req.body.nudgeBooster : null,
-    })
-        .then((nudge) => {
-            res.status(201).json({
-                status: true,
-                nudge,
-            })
+    try {
+        realtime.AdminNudge.create({
+            id: uuid.v4(),
+            type: req.body.type ? req.body.type : null,
+            title: req.body.title ? req.body.title : null,
+            nudgeBooster: req.body.nudgeBooster ? req.body.nudgeBooster : null,
         })
-        .catch((err) => {
-            res.status(404).json({
-                status: false,
-                error: err.message,
+            .then((nudge) => {
+                controllers.addNudges(nudge)
+
+                res.status(201).json({
+                    status: true,
+                    nudge,
+                })
             })
+    } catch (err) {
+        res.status(500).json({
+            status: false,
+            error: err.message,
         })
+    }
 })
 
 // modify an existing nudge

@@ -12,6 +12,7 @@ const nudgeSchema = require('./api/models/user/nudges')
 const querySchema = require('./api/models/user/queries')
 const adminNudges = require('./api/models/admin/nudges')
 const realtime = require('./resources/realtime_data.js')
+const customNudgeSchema = require('./api/models/user/custom_nudges')
 
 const app = express()
 var db = {}
@@ -41,9 +42,10 @@ const connection = new Sequelize(keys.databaseName, credentials.userName, creden
 // Defining tables
 const User = connection.define('users', userSchema)
 const Memo = connection.define('memos', memoSchema)
-const Nudge = connection.define('userNudges', nudgeSchema)
 const Query = connection.define('queries', querySchema)
+const Nudge = connection.define('userNudges', nudgeSchema)
 const AdminNudge = connection.define('adminNudges', adminNudges)
+const CustomNudge = connection.define('customNudges', customNudgeSchema)
 
 // Updating the realtime data to the table variables
 realtime.User = User
@@ -51,6 +53,7 @@ realtime.Memo = Memo
 realtime.Nudge = Nudge
 realtime.Query = Query
 realtime.AdminNudge = AdminNudge
+realtime.CustomNudge = CustomNudge
 
 // Updating tables
 connection.sync()

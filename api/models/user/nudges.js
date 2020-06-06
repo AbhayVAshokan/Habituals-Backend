@@ -1,3 +1,5 @@
+// A huge nudge which handles all the nudges of all the users for each day
+
 const Sequelize = require('sequelize')
 
 const nudgeSchema = {
@@ -5,14 +7,8 @@ const nudgeSchema = {
         type: Sequelize.STRING,
         primaryKey: true,
     },
-    type: {
-        type: Sequelize.STRING,
-        required: true,
-    },
-    title: {
-        type: Sequelize.STRING,
-        required: true,
-    },
+    userId: Sequelize.STRING,
+    nudgeId: Sequelize.STRING,
     status: {
         type: Sequelize.STRING,
         required: true,
@@ -21,7 +17,6 @@ const nudgeSchema = {
         type: Sequelize.DATE,
         default: Date.now
     },
-    nudgeBooster: Sequelize.TEXT,
 }
 
 module.exports = nudgeSchema

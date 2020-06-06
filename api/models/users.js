@@ -20,6 +20,10 @@ const userSchema = {
         type: Sequelize.BOOLEAN,
         default: true,
     },
+    startDate: {
+        type: Sequelize.DATE,
+        required: true
+    },
 
     age: Sequelize.INTEGER,
     gender: Sequelize.STRING,

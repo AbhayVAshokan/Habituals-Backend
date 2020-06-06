@@ -1,4 +1,4 @@
-// Memo Schema
+// Memos of an individual user
 
 const Sequelize = require('sequelize')
 

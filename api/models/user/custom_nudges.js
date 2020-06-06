@@ -1,15 +1,15 @@
-// This is the table where all the nudges, nudgeBoosters and their corresponding types are stored. These can be created, deleted or modified only by the admin.
+// These nudges are created by the user
 
 const Sequelize = require('sequelize')
 
-const adminNudgeSchema = {
+const customNudgeSchema = {
     id: {
         type: Sequelize.STRING,
         primaryKey: true,
     },
     type: {
         type: Sequelize.STRING,
-        required: true,
+        default: 'custom'
     },
     title: {
         type: Sequelize.STRING,
@@ -18,4 +18,4 @@ const adminNudgeSchema = {
     nudgeBooster: Sequelize.TEXT,
 }
 
-module.exports = adminNudgeSchema
+module.exports = customNudgeSchema

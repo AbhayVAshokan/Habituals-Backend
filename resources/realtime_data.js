@@ -6,5 +6,6 @@ module.exports = {
     Query: null,
     Nudge: null,
     AdminNudge: null,
+    CustomNudge: null,
     auth: null,
 }
