@@ -7,7 +7,6 @@ const userRoutes = require('./api/routes/users')
 const userSchema = require('./api/models/users')
 const adminRoutes = require('./api/routes/admin')
 const memoSchema = require('./api/models/user/memos')
-const credentials = require('./resources/credentials')
 const nudgeSchema = require('./api/models/user/nudges')
 const querySchema = require('./api/models/user/queries')
 const adminNudges = require('./api/models/admin/nudges')
@@ -34,7 +33,7 @@ app.use((req, res, next) => {
 });
 
 // Connecting to MySQL server
-const connection = new Sequelize(keys.databaseName, credentials.userName, credentials.userPassword, {
+const connection = new Sequelize(keys.databaseName, keys.userName, keys.userPassword, {
     host: keys.baseUrl,
     dialect: 'mysql',
 })

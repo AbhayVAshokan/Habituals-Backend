@@ -13,8 +13,6 @@ module.exports = {
         realtime.User.findAll()
         .then((users) => {
             for(var i=0; i<users.length; i++) {
-                console.log(users[i].dataValues)
-                console.log('---------------------')
                 for(var j=0; j<66; j++) {
                     realtime.Nudge.create({
                         id: uuid.v4(),

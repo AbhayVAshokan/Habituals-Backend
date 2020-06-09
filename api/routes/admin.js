@@ -6,7 +6,9 @@ const controllers = require('../controllers/admin_controllers')
 
 const router = express.Router()
 
+// Testing route
 router.get('/', (req, res, next) => {
+    console.log('testing....successful!')
     res.status(423).json({
         message: req.headers
     })
